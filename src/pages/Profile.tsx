@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,16 +42,17 @@ const mockUser = {
     reliabilityPercentage: 88
   },
   recentEvents: [
-    { id: '1', title: 'Odbojka - Maksimir', date: '2024-01-10', attended: true },
-    { id: '2', title: 'Nogomet - Bundek', date: '2024-01-08', attended: true },
-    { id: '3', title: 'Padel - Arena', date: '2024-01-05', attended: false },
-    { id: '4', title: 'Tenis - TK Zagreb', date: '2024-01-03', attended: true },
-    { id: '5', title: 'Odbojka - Športska', date: '2024-01-01', attended: true },
+    { id: '1', title: 'Odbojka - Maksimir', date: '2024-01-10', attended: true, organizerId: 'org1', organizerName: 'Marko Marković' },
+    { id: '2', title: 'Nogomet - Bundek', date: '2024-01-08', attended: true, organizerId: 'org2', organizerName: 'Petra Petrić' },
+    { id: '3', title: 'Padel - Arena', date: '2024-01-05', attended: false, organizerId: 'org3', organizerName: 'Luka Lukić' },
+    { id: '4', title: 'Tenis - TK Zagreb', date: '2024-01-03', attended: true, organizerId: 'org4', organizerName: 'Nina Nikić' },
+    { id: '5', title: 'Odbojka - Športska', date: '2024-01-01', attended: true, organizerId: 'org5', organizerName: 'Ivo Ivić' },
   ]
 };
 
 export default function Profile() {
   const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
 
   const getReliabilityBadge = (reliability: number) => {
     if (reliability >= 90) {
@@ -181,10 +183,23 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="space-y-3">
             {mockUser.recentEvents.map((event) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div 
+                key={event.id} 
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => navigate(`/events/${event.id}`)}
+              >
                 <div className="flex-1">
                   <p className="font-medium text-foreground text-sm">{event.title}</p>
                   <p className="text-xs text-muted-foreground">{event.date}</p>
+                  <p 
+                    className="text-xs text-primary hover:underline cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/profile/${event.organizerId}`);
+                    }}
+                  >
+                    Organizator: {event.organizerName}
+                  </p>
                 </div>
                 <div className="flex items-center">
                   {event.attended ? (

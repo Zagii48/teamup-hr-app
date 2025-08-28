@@ -199,7 +199,10 @@ export default function EventDetails() {
               <CardTitle className="text-sm">Organizator</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="flex items-center justify-between">
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-accent/50 p-1 rounded-lg transition-colors"
+                onClick={() => navigate(`/profile/${mockEvent.organizer.id}`)}
+              >
                 <div className="flex items-center space-x-3">
                   <Avatar>
                     <AvatarFallback className="bg-primary text-primary-foreground">
@@ -207,7 +210,7 @@ export default function EventDetails() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-foreground">{mockEvent.organizer.name}</p>
+                    <p className="font-medium text-foreground hover:text-primary transition-colors">{mockEvent.organizer.name}</p>
                     <div className="flex items-center space-x-2">
                       <Phone className="h-3 w-3 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">{mockEvent.organizer.phone}</span>
@@ -227,56 +230,89 @@ export default function EventDetails() {
               <CardTitle className="text-sm">Prijavljeni igrači ({mockEvent.currentPlayers})</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-3">
-              {mockEvent.players.map((player, index) => (
-                <div key={player.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-xs font-medium text-primary">{index + 1}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground text-sm">{player.name}</p>
-                      <p className="text-xs text-muted-foreground">{player.phone}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-xs font-medium ${getReliabilityColor(player.reliability)}`}>
-                      {player.reliability}%
-                    </span>
-                    {mockEvent.isUserOrganizer && (
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAttendanceChange(player.id, true)}
-                          className={`h-6 w-6 p-0 ${attendanceData[player.id] === true ? 'bg-success/20 text-success' : 'text-muted-foreground'}`}
-                        >
-                          <CheckCircle className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAttendanceChange(player.id, false)}
-                          className={`h-6 w-6 p-0 ${attendanceData[player.id] === false ? 'bg-destructive/20 text-destructive' : 'text-muted-foreground'}`}
-                        >
-                          <XCircle className="h-3 w-3" />
-                        </Button>
+              {mockEvent.isUserOrganizer ? (
+                // Show attendance controls for organizer
+                <>
+                  {mockEvent.players.map((player, index) => (
+                    <div key={player.id} className="flex items-center justify-between">
+                      <div 
+                        className="flex items-center space-x-3 cursor-pointer hover:bg-accent/50 p-1 rounded-lg transition-colors flex-1"
+                        onClick={() => navigate(`/profile/${player.id}`)}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary">{index + 1}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground text-sm hover:text-primary transition-colors">{player.name}</p>
+                          <p className="text-xs text-muted-foreground">{player.phone}</p>
+                        </div>
                       </div>
-                    )}
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-xs font-medium ${getReliabilityColor(player.reliability)}`}>
+                          {player.reliability}%
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAttendanceChange(player.id, true)}
+                            className={`h-6 w-6 p-0 ${attendanceData[player.id] === true ? 'bg-success/20 text-success' : 'text-muted-foreground'}`}
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAttendanceChange(player.id, false)}
+                            className={`h-6 w-6 p-0 ${attendanceData[player.id] === false ? 'bg-destructive/20 text-destructive' : 'text-muted-foreground'}`}
+                          >
+                            <XCircle className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-3 border-t border-border/50">
+                    <Button 
+                      onClick={handleSaveAttendance}
+                      disabled={isSavingAttendance || Object.keys(attendanceData).length === 0}
+                      className="w-full bg-gradient-primary text-white"
+                      size="sm"
+                    >
+                      {isSavingAttendance ? 'Spremam...' : 'Spremi evidenciju'}
+                    </Button>
                   </div>
-                </div>
-              ))}
-              
-              {mockEvent.isUserOrganizer && (
-                <div className="pt-3 border-t border-border/50">
-                  <Button 
-                    onClick={handleSaveAttendance}
-                    disabled={isSavingAttendance || Object.keys(attendanceData).length === 0}
-                    className="w-full bg-gradient-primary text-white"
-                    size="sm"
-                  >
-                    {isSavingAttendance ? 'Spremam...' : 'Spremi evidenciju'}
-                  </Button>
-                </div>
+                </>
+              ) : (
+                // Show read-only list for non-organizers
+                <>
+                  {mockEvent.players.map((player, index) => (
+                    <div key={player.id} className="flex items-center justify-between">
+                      <div 
+                        className="flex items-center space-x-3 cursor-pointer hover:bg-accent/50 p-1 rounded-lg transition-colors"
+                        onClick={() => navigate(`/profile/${player.id}`)}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary">{index + 1}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground text-sm hover:text-primary transition-colors">{player.name}</p>
+                          <p className="text-xs text-muted-foreground">{player.phone}</p>
+                        </div>
+                      </div>
+                      <span className={`text-xs font-medium ${getReliabilityColor(player.reliability)}`}>
+                        {player.reliability}%
+                      </span>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-3 border-t border-border/50 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Samo organizator može uređivati dolaske
+                    </p>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -290,12 +326,15 @@ export default function EventDetails() {
               <CardContent className="p-4 pt-0 space-y-3">
                 {mockEvent.waitingList.map((player, index) => (
                   <div key={player.id} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div 
+                      className="flex items-center space-x-3 cursor-pointer hover:bg-accent/50 p-1 rounded-lg transition-colors"
+                      onClick={() => navigate(`/profile/${player.id}`)}
+                    >
                       <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-xs font-medium text-muted-foreground">{index + 1}</span>
                       </div>
                       <div>
-                        <p className="font-medium text-foreground text-sm">{player.name}</p>
+                        <p className="font-medium text-foreground text-sm hover:text-primary transition-colors">{player.name}</p>
                         <p className="text-xs text-muted-foreground">{player.phone}</p>
                       </div>
                     </div>

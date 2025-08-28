@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Search, 
   Filter, 
@@ -15,11 +16,12 @@ import {
   Zap,
   Gamepad2,
   Target,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react';
 
-// Mock data for user's events (events user is signed up for)
-const mockUserEvents = [
+// Mock data for user's signed up events
+const mockSignedUpEvents = [
   {
     id: '1',
     title: 'Večernja odbojka u Maksimiru',
@@ -33,7 +35,8 @@ const mockUserEvents = [
     price: 25,
     status: 'confirmed',
     canCancel: true,
-    cancelDeadline: '2024-01-15T17:00:00Z'
+    cancelDeadline: '2024-01-15T17:00:00Z',
+    organizer: { id: 'org1', name: 'Marko Marković' }
   },
   {
     id: '3',
@@ -48,22 +51,44 @@ const mockUserEvents = [
     price: 40,
     status: 'waitlist',
     canCancel: true,
-    cancelDeadline: '2024-01-16T16:00:00Z'
-  },
+    cancelDeadline: '2024-01-16T16:00:00Z',
+    organizer: { id: 'org2', name: 'Ana Anić' }
+  }
+];
+
+// Mock data for user's created events  
+const mockCreatedEvents = [
   {
-    id: '5',
-    title: 'Košarka u Ciboni',
+    id: '2',
+    title: 'Košarka - Dražen Petrović',
     sport: 'Košarka',
     sportIcon: Gamepad2,
-    date: '2024-01-14',
+    date: '2024-01-17', 
     time: '20:00',
-    location: 'Cibona',
-    currentPlayers: 10,
+    location: 'Dvorana Dražen Petrović',
+    currentPlayers: 9,
     maxPlayers: 10,
-    price: 35,
+    price: 30,
     status: 'confirmed',
     canCancel: false,
-    cancelDeadline: '2024-01-14T18:00:00Z'
+    cancelDeadline: '2024-01-17T18:00:00Z',
+    organizer: { id: 'currentUser', name: 'Ti' }
+  },
+  {
+    id: '4',
+    title: 'Tenis - TK Zagreb',
+    sport: 'Tenis',
+    sportIcon: Target,
+    date: '2024-01-18',
+    time: '16:00', 
+    location: 'Teniski klub Zagreb',
+    currentPlayers: 4,
+    maxPlayers: 4,
+    price: 50,
+    status: 'confirmed',
+    canCancel: true,
+    cancelDeadline: '2024-01-18T14:00:00Z',
+    organizer: { id: 'currentUser', name: 'Ti' }
   }
 ];
 
@@ -77,8 +102,13 @@ export default function Index() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('signed-up');
 
-  const filteredEvents = mockUserEvents.filter(event => {
+  const getCurrentEvents = () => {
+    return activeTab === 'signed-up' ? mockSignedUpEvents : mockCreatedEvents;
+  };
+
+  const filteredEvents = getCurrentEvents().filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.sport.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.location.toLowerCase().includes(searchQuery.toLowerCase());
@@ -88,7 +118,7 @@ export default function Index() {
     return matchesSearch && matchesFilter;
   });
 
-  const getCancellationStatus = (event: typeof mockUserEvents[0]) => {
+  const getCancellationStatus = (event: typeof mockSignedUpEvents[0]) => {
     const now = new Date();
     const deadline = new Date(event.cancelDeadline);
     
@@ -122,142 +152,171 @@ export default function Index() {
         {/* Header */}
         <div className="text-center pt-4">
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Moji termini
+            Pregled
           </h1>
           <p className="text-muted-foreground">
-            Termini na koje si prijavljen
+            Tvoji termini i prijave
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Pretraži termine, sportove, lokacije..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-card border-border"
-          />
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-muted">
+            <TabsTrigger value="signed-up" className="data-[state=active]:bg-background">
+              Prijavljeni termini
+            </TabsTrigger>
+            <TabsTrigger value="created" className="data-[state=active]:bg-background">
+              Moji termini
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Filters */}
-        <div className="flex space-x-2 overflow-x-auto pb-2">
-          {filterOptions.map((filter) => (
-            <Button
-              key={filter.id}
-              variant={activeFilter === filter.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setActiveFilter(filter.id)}
-              className={`whitespace-nowrap ${
-                activeFilter === filter.id 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-card text-foreground border-border hover:bg-accent'
-              }`}
-            >
-              {filter.label}
-            </Button>
-          ))}
-        </div>
+          <TabsContent value={activeTab} className="space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pretraži termine, sportove, lokacije..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-card border-border"
+              />
+            </div>
 
-        {/* Events List */}
-        <div className="space-y-4">
-          {filteredEvents.length === 0 ? (
-            <Card className="bg-gradient-card shadow-card border-0">
-              <CardContent className="p-8 text-center">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">
-                  Nema termina
-                </h3>
-                <p className="text-muted-foreground">
-                  {searchQuery ? 'Pokušaj s drugim pojmom za pretraživanje' : 'Nisi prijavljen na nijedan termin'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredEvents.map((event) => (
-              <Card 
-                key={event.id}
-                className="bg-gradient-card shadow-card hover:shadow-elevated transition-all duration-300 cursor-pointer border-0"
-                onClick={() => navigate(`/events/${event.id}`)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <event.sportIcon className="h-5 w-5 text-primary" />
+            {/* Filters */}
+            <div className="flex space-x-2 overflow-x-auto pb-2">
+              {filterOptions.map((filter) => (
+                <Button
+                  key={filter.id}
+                  variant={activeFilter === filter.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`whitespace-nowrap ${
+                    activeFilter === filter.id 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-card text-foreground border-border hover:bg-accent'
+                  }`}
+                >
+                  {filter.label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Events List */}
+            <div className="space-y-4">
+              {filteredEvents.length === 0 ? (
+                <Card className="bg-gradient-card shadow-card border-0">
+                  <CardContent className="p-8 text-center">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">
+                      Nema termina
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {searchQuery 
+                        ? 'Pokušaj s drugim pojmom za pretraživanje' 
+                        : activeTab === 'signed-up' 
+                          ? 'Nisi prijavljen na nijedan termin'
+                          : 'Nisi kreirao nijedan termin'
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredEvents.map((event) => (
+                  <Card 
+                    key={event.id}
+                    className="bg-gradient-card shadow-card hover:shadow-elevated transition-all duration-300 cursor-pointer border-0"
+                    onClick={() => navigate(`/events/${event.id}`)}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <event.sportIcon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base text-foreground">
+                              {event.title}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              {event.sport}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {getStatusBadge(event.status)}
+                          {activeTab === 'created' && (
+                            <div className="flex items-center space-x-1">
+                              <User className="h-3 w-3 text-primary" />
+                              <span className="text-xs text-primary">Organizator</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-base text-foreground">
-                          {event.title}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          {event.sport}
-                        </p>
-                      </div>
-                    </div>
-                    {getStatusBadge(event.status)}
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{event.time}</p>
-                        <p className="text-xs text-muted-foreground">{event.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{event.location}</p>
-                        <p className="text-xs text-muted-foreground">{event.price} kn</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">
-                          {event.currentPlayers}/{event.maxPlayers} igrača
-                        </span>
-                      </div>
-                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-300"
-                          style={{ width: `${(event.currentPlayers / event.maxPlayers) * 100}%` }}
-                        />
-                      </div>
-                    </div>
+                    </CardHeader>
                     
-                    {/* Cancellation Status */}
-                    <div className="pt-2 border-t border-border/50">
-                      <p className={`text-xs ${getCancellationStatus(event).canCancel ? 'text-muted-foreground' : 'text-destructive'}`}>
-                        {getCancellationStatus(event).message}
-                      </p>
-                      {getCancellationStatus(event).canCancel && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 mt-1 text-destructive hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Handle cancellation logic here
-                          }}
-                        >
-                          Odjavi se
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                    <CardContent className="pt-0">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{event.time}</p>
+                            <p className="text-xs text-muted-foreground">{event.date}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{event.location}</p>
+                            <p className="text-xs text-muted-foreground">{event.price} kn</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-foreground">
+                              {event.currentPlayers}/{event.maxPlayers} igrača
+                            </span>
+                          </div>
+                          <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary rounded-full transition-all duration-300"
+                              style={{ width: `${(event.currentPlayers / event.maxPlayers) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Cancellation Status - only for signed up events */}
+                        {activeTab === 'signed-up' && (
+                          <div className="pt-2 border-t border-border/50">
+                            <p className={`text-xs ${getCancellationStatus(event).canCancel ? 'text-muted-foreground' : 'text-destructive'}`}>
+                              {getCancellationStatus(event).message}
+                            </p>
+                            {getCancellationStatus(event).canCancel && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 mt-1 text-destructive hover:bg-destructive/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Handle cancellation logic here
+                                }}
+                              >
+                                Odjavi se
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </MobileLayout>
   );

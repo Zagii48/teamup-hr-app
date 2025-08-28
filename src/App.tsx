@@ -9,6 +9,9 @@ import Sports from "./pages/Sports";
 import EventDetails from "./pages/EventDetails";  
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
+import EditProfile from "./pages/EditProfile";
+import About from "./pages/About";
 import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +30,9 @@ const App = () => (
             <Route path="/sports/:slug" element={<Sports />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<PublicProfile />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/about" element={<About />} />
             <Route path="/create" element={<CreateEvent />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
