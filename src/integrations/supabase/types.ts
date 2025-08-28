@@ -133,12 +133,85 @@ export type Database = {
         }
         Relationships: []
       }
+      sports: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          nickname: string
+          password_hash: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          nickname: string
+          password_hash: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          nickname?: string
+          password_hash?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      authenticate_user: {
+        Args: { password_input: string; username_input: string }
+        Returns: {
+          full_name: string
+          nickname: string
+          user_id: string
+        }[]
+      }
+      create_user_account: {
+        Args: {
+          full_name_input: string
+          nickname_input: string
+          password_input: string
+          phone_input: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       event_status: "draft" | "active" | "completed" | "cancelled"
