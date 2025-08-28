@@ -112,6 +112,7 @@ All colors MUST be HSL for proper theming support.
     --shadow-card: 0 4px 16px -8px hsl(0 0% 0% / 0.3);
     --shadow-elevated: 0 8px 32px -12px hsl(0 0% 0% / 0.5);
     --shadow-glow: 0 0 40px hsl(174 83% 55% / 0.2);
+  }
 }
 
 @layer base {
