@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Sports from "./pages/Sports";
 import EventDetails from "./pages/EventDetails";  
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,8 +26,8 @@ const App = () => (
             <Route path="/sports" element={<Sports />} />
             <Route path="/sports/:slug" element={<Sports />} />
             <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/profile" element={<Index />} />
-            <Route path="/create" element={<Index />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/create" element={<CreateEvent />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

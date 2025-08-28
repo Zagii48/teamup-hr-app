@@ -2,7 +2,7 @@ import { Home, Trophy, Plus, User, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const navigationItems = [
-  { path: '/', icon: Home, label: 'Feed' },
+  { path: '/', icon: Home, label: 'Pregled' },
   { path: '/sports', icon: Trophy, label: 'Sportovi' },
   { path: '/create', icon: Plus, label: 'Novi' },
   { path: '/profile', icon: User, label: 'Profil' },

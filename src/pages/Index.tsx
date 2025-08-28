@@ -18,8 +18,8 @@ import {
   Calendar
 } from 'lucide-react';
 
-// Mock data for events
-const mockEvents = [
+// Mock data for user's events (events user is signed up for)
+const mockUserEvents = [
   {
     id: '1',
     title: 'Večernja odbojka u Maksimiru',
@@ -31,20 +31,9 @@ const mockEvents = [
     currentPlayers: 8,
     maxPlayers: 12,
     price: 25,
-    status: 'open'
-  },
-  {
-    id: '2', 
-    title: 'Nogomet 5v5 - Bundek',
-    sport: 'Nogomet',
-    sportIcon: Dribbble,
-    date: '2024-01-15',
-    time: '20:30',
-    location: 'Bundek',
-    currentPlayers: 10,
-    maxPlayers: 10,
-    price: 30,
-    status: 'full'
+    status: 'confirmed',
+    canCancel: true,
+    cancelDeadline: '2024-01-15T17:00:00Z'
   },
   {
     id: '3',
@@ -57,27 +46,31 @@ const mockEvents = [
     currentPlayers: 6,
     maxPlayers: 8,
     price: 40,
-    status: 'open'
+    status: 'waitlist',
+    canCancel: true,
+    cancelDeadline: '2024-01-16T16:00:00Z'
   },
   {
-    id: '4',
-    title: 'Tenis doubles',
-    sport: 'Tenis',
+    id: '5',
+    title: 'Košarka u Ciboni',
+    sport: 'Košarka',
     sportIcon: Gamepad2,
-    date: '2024-01-16',
-    time: '17:00', 
-    location: 'TK Zagreb',
-    currentPlayers: 3,
-    maxPlayers: 4,
-    price: 20,
-    status: 'open'
+    date: '2024-01-14',
+    time: '20:00',
+    location: 'Cibona',
+    currentPlayers: 10,
+    maxPlayers: 10,
+    price: 35,
+    status: 'confirmed',
+    canCancel: false,
+    cancelDeadline: '2024-01-14T18:00:00Z'
   }
 ];
 
 const filterOptions = [
   { id: 'all', label: 'Svi termini' },
-  { id: 'open', label: 'Dostupni' },
-  { id: 'full', label: 'Popunjeni' },
+  { id: 'confirmed', label: 'Potvrđeni' },
+  { id: 'waitlist', label: 'Pričuva' },
 ];
 
 export default function Index() {
@@ -85,7 +78,7 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const filteredEvents = mockEvents.filter(event => {
+  const filteredEvents = mockUserEvents.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.sport.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.location.toLowerCase().includes(searchQuery.toLowerCase());
@@ -95,14 +88,32 @@ export default function Index() {
     return matchesSearch && matchesFilter;
   });
 
-  const getStatusBadge = (status: string, currentPlayers: number, maxPlayers: number) => {
-    if (status === 'full') {
-      return <Badge className="bg-destructive/10 text-destructive">Popunjeno</Badge>;
+  const getCancellationStatus = (event: typeof mockUserEvents[0]) => {
+    const now = new Date();
+    const deadline = new Date(event.cancelDeadline);
+    
+    if (!event.canCancel || now > deadline) {
+      return {
+        canCancel: false,
+        message: 'Otkazivanje više nije moguće'
+      };
     }
-    if (currentPlayers / maxPlayers >= 0.8) {
-      return <Badge className="bg-warning/10 text-warning">Skoro puno</Badge>;
+    
+    const hoursLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60));
+    return {
+      canCancel: true,
+      message: `Možeš otkazati do: ${deadline.toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`
+    };
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'confirmed') {
+      return <Badge className="bg-success/10 text-success">Potvrđeno</Badge>;
     }
-    return <Badge className="bg-success/10 text-success">Dostupno</Badge>;
+    if (status === 'waitlist') {
+      return <Badge className="bg-warning/10 text-warning">Pričuva</Badge>;
+    }
+    return <Badge className="bg-muted/10 text-muted-foreground">Nepoznato</Badge>;
   };
 
   return (
@@ -111,10 +122,10 @@ export default function Index() {
         {/* Header */}
         <div className="text-center pt-4">
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            TeamUp
+            Moji termini
           </h1>
           <p className="text-muted-foreground">
-            Brza i fer prijava na sportske termine
+            Termini na koje si prijavljen
           </p>
         </div>
 
@@ -158,7 +169,7 @@ export default function Index() {
                   Nema termina
                 </h3>
                 <p className="text-muted-foreground">
-                  {searchQuery ? 'Pokušaj s drugim pojmom za pretraživanje' : 'Trenutno nema dostupnih termina'}
+                  {searchQuery ? 'Pokušaj s drugim pojmom za pretraživanje' : 'Nisi prijavljen na nijedan termin'}
                 </p>
               </CardContent>
             </Card>
@@ -184,7 +195,7 @@ export default function Index() {
                         </p>
                       </div>
                     </div>
-                    {getStatusBadge(event.status, event.currentPlayers, event.maxPlayers)}
+                    {getStatusBadge(event.status)}
                   </div>
                 </CardHeader>
                 
@@ -206,18 +217,40 @@ export default function Index() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">
-                        {event.currentPlayers}/{event.maxPlayers} igrača
-                      </span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">
+                          {event.currentPlayers}/{event.maxPlayers} igrača
+                        </span>
+                      </div>
+                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary rounded-full transition-all duration-300"
+                          style={{ width: `${(event.currentPlayers / event.maxPlayers) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full transition-all duration-300"
-                        style={{ width: `${(event.currentPlayers / event.maxPlayers) * 100}%` }}
-                      />
+                    
+                    {/* Cancellation Status */}
+                    <div className="pt-2 border-t border-border/50">
+                      <p className={`text-xs ${getCancellationStatus(event).canCancel ? 'text-muted-foreground' : 'text-destructive'}`}>
+                        {getCancellationStatus(event).message}
+                      </p>
+                      {getCancellationStatus(event).canCancel && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 mt-1 text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle cancellation logic here
+                          }}
+                        >
+                          Odjavi se
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
