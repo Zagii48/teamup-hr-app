@@ -54,7 +54,7 @@ export default function CreateEvent() {
     title: '',
     date: '',
     time: '',
-    duration: '2',
+    duration: '60',
     location: '',
     capacity: '12',
     waitingList: '4',
@@ -211,19 +211,30 @@ export default function CreateEvent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="duration">Trajanje (sati)</Label>
+              <Label htmlFor="duration">Trajanje termina</Label>
               <Select value={formData.duration} onValueChange={(value) => handleInputChange('duration', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 sat</SelectItem>
-                  <SelectItem value="1.5">1.5 sata</SelectItem>
-                  <SelectItem value="2">2 sata</SelectItem>
-                  <SelectItem value="2.5">2.5 sata</SelectItem>
-                  <SelectItem value="3">3 sata</SelectItem>
+                  <SelectItem value="30">30 min</SelectItem>
+                  <SelectItem value="60">60 min</SelectItem>
+                  <SelectItem value="90">90 min</SelectItem>
+                  <SelectItem value="120">120 min</SelectItem>
+                  <SelectItem value="custom">Prilagođeno...</SelectItem>
                 </SelectContent>
               </Select>
+              {formData.duration === 'custom' && (
+                <div className="mt-2">
+                  <Input
+                    type="number"
+                    placeholder="Trajanje u minutama"
+                    min="15"
+                    max="480"
+                    onChange={(e) => handleInputChange('duration', e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

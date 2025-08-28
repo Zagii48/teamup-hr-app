@@ -15,9 +15,13 @@ import {
 export default function About() {
   const navigate = useNavigate();
 
-  const handleSupportCreator = () => {
-    // Open external link or show toast
-    window.open('https://revolut.me/gabrijels', '_blank');
+  const handleSupportCreator = (platform: 'revolut' | 'keks') => {
+    if (platform === 'revolut') {
+      window.open('https://revolut.me/gabrijels', '_blank');
+    } else {
+      // KEKS Pay link - replace with actual link
+      window.open('https://keks.hr/gabrijels', '_blank');
+    }
   };
 
   return (
@@ -46,7 +50,7 @@ export default function About() {
               <Smartphone className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-xl text-foreground">TeamUp</CardTitle>
-            <p className="text-muted-foreground">Početna verzija aplikacije</p>
+            <p className="text-muted-foreground font-semibold">Verzija: v0.1.0</p>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-foreground">
@@ -92,13 +96,23 @@ export default function About() {
                 Ako ti se sviđa aplikacija, možeš podržati njen razvoj
               </p>
             </div>
-            <Button 
-              onClick={handleSupportCreator}
-              className="w-full bg-gradient-primary text-white font-medium"
-            >
-              <Heart className="h-4 w-4 mr-2" />
-              Podrži na Revolut
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => handleSupportCreator('revolut')}
+                className="w-full bg-gradient-primary text-white font-medium"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Podrži na Revolut
+              </Button>
+              <Button 
+                onClick={() => handleSupportCreator('keks')}
+                variant="outline"
+                className="w-full border-primary/20 text-primary hover:bg-primary/10"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Podrži na KEKS Pay
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

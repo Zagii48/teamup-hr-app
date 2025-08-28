@@ -39,6 +39,14 @@ const mockEvent = {
     phone: '+385 91 *** 45 67',
     reliability: 95
   },
+  coOrganizers: [
+    {
+      id: 'co1',
+      name: 'Ana Anić',
+      phone: '+385 92 *** 78 90',
+      reliability: 91
+    }
+  ],
   players: [
     { id: '1', name: 'Ana Anić', phone: '+385 98 *** 12 34', reliability: 88, attended: null },
     { id: '2', name: 'Petar Petrić', phone: '+385 95 *** 56 78', reliability: 92, attended: null },
@@ -196,9 +204,11 @@ export default function EventDetails() {
           {/* Organizer */}
           <Card className="bg-gradient-card shadow-card border-0">
             <CardHeader>
-              <CardTitle className="text-sm">Organizator</CardTitle>
+              <CardTitle className="text-sm">
+                {mockEvent.coOrganizers?.length > 0 ? 'Organizatori' : 'Organizator'}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 space-y-3">
               <div 
                 className="flex items-center justify-between cursor-pointer hover:bg-accent/50 p-1 rounded-lg transition-colors"
                 onClick={() => navigate(`/profile/${mockEvent.organizer.id}`)}
@@ -210,7 +220,10 @@ export default function EventDetails() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-foreground hover:text-primary transition-colors">{mockEvent.organizer.name}</p>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium text-foreground hover:text-primary transition-colors">{mockEvent.organizer.name}</p>
+                      <Badge variant="secondary" className="text-xs">Organizator</Badge>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <Phone className="h-3 w-3 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">{mockEvent.organizer.phone}</span>
@@ -218,9 +231,39 @@ export default function EventDetails() {
                   </div>
                 </div>
                 <Badge className={getReliabilityBadge(mockEvent.organizer.reliability)}>
-                  {mockEvent.organizer.reliability}% pouzdanost
+                  {mockEvent.organizer.reliability}%
                 </Badge>
               </div>
+              
+              {/* Co-organizers */}
+              {mockEvent.coOrganizers?.map((coOrg) => (
+                <div 
+                  key={coOrg.id}
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 p-1 rounded-lg transition-colors"
+                  onClick={() => navigate(`/profile/${coOrg.id}`)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Avatar>
+                      <AvatarFallback className="bg-secondary text-secondary-foreground">
+                        {coOrg.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-foreground hover:text-primary transition-colors">{coOrg.name}</p>
+                        <Badge variant="outline" className="text-xs">Co-organizator</Badge>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">{coOrg.phone}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge className={getReliabilityBadge(coOrg.reliability)}>
+                    {coOrg.reliability}%
+                  </Badge>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -230,7 +273,7 @@ export default function EventDetails() {
               <CardTitle className="text-sm">Prijavljeni igrači ({mockEvent.currentPlayers})</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-3">
-              {mockEvent.isUserOrganizer ? (
+              {(mockEvent.isUserOrganizer || mockEvent.coOrganizers?.some(co => co.id === 'currentUserId')) ? (
                 // Show attendance controls for organizer
                 <>
                   {mockEvent.players.map((player, index) => (
@@ -309,7 +352,7 @@ export default function EventDetails() {
                   
                   <div className="pt-3 border-t border-border/50 text-center">
                     <p className="text-sm text-muted-foreground">
-                      Samo organizator može uređivati dolaske
+                      Samo organizator ili co-organizator može uređivati dolaske
                     </p>
                   </div>
                 </>

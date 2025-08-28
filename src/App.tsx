@@ -13,6 +13,8 @@ import PublicProfile from "./pages/PublicProfile";
 import EditProfile from "./pages/EditProfile";
 import About from "./pages/About";
 import CreateEvent from "./pages/CreateEvent";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/about" element={<About />} />
             <Route path="/create" element={<CreateEvent />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
