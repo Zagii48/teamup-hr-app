@@ -11,9 +11,7 @@ import {
   Camera,
   User,
   Upload,
-  X,
-  Eye,
-  EyeOff
+  X
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +20,6 @@ import { supabase } from '@/integrations/supabase/client';
 const mockCurrentUser = {
   id: '1',
   name: 'Ana Anić',
-  username: 'ana.anic',
   avatar_url: null
 };
 
@@ -30,13 +27,8 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: mockCurrentUser.name,
-    username: mockCurrentUser.username,
-    newPassword: '',
-    confirmPassword: '',
     avatar_url: mockCurrentUser.avatar_url
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -116,16 +108,6 @@ export default function EditProfile() {
     setIsLoading(true);
 
     try {
-      // Check password confirmation
-      if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-        toast({
-          title: "Greška",
-          description: "Lozinke se ne poklapaju.",
-          variant: "destructive"
-        });
-        return;
-      }
-
       let avatarUrl = formData.avatar_url;
 
       // Upload new image if selected
@@ -138,32 +120,20 @@ export default function EditProfile() {
         }
       }
 
-      // Update user profile
-      const updates: any = {
-        data: {
-          full_name: formData.name,
-          username: formData.username
-        }
-      };
-
-      if (formData.newPassword) {
-        updates.password = formData.newPassword;
-      }
-
-      const { error } = await supabase.auth.updateUser(updates);
-
-      if (error) throw error;
+      // Here you would update the user profile in your database
+      // For now, we'll just simulate the API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       toast({
-        title: "Profil ažuriran ✅",
+        title: "Profil ažuriran",
         description: "Vaše promjene su uspješno spremljene.",
       });
 
       navigate('/profile');
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Greška",
-        description: error.message || "Dogodila se greška pri spremanju profila.",
+        description: "Dogodila se greška pri spremanju profila.",
         variant: "destructive"
       });
     } finally {
@@ -271,73 +241,6 @@ export default function EditProfile() {
                   required
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-foreground">Korisničko ime</Label>
-                <Input
-                  id="username"
-                  value={formData.username}
-                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                  className="bg-card border-border text-foreground"
-                  placeholder="Unesite korisničko ime"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-foreground">Nova lozinka (opcionalno)</Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.newPassword}
-                    onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    className="bg-card border-border text-foreground pr-10"
-                    placeholder="Unesite novu lozinku"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {formData.newPassword && (
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-foreground">Potvrdi lozinku</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="bg-card border-border text-foreground pr-10"
-                      placeholder="Ponovite novu lozinku"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 

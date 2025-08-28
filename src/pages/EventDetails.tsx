@@ -71,7 +71,6 @@ export default function EventDetails() {
   const [isInWaitingList, setIsInWaitingList] = useState(false);
   const [attendanceData, setAttendanceData] = useState<{[playerId: string]: boolean | null}>({});
   const [isSavingAttendance, setIsSavingAttendance] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
 
   // Check if user was promoted from waitlist (simulate)
   React.useEffect(() => {
@@ -123,29 +122,6 @@ export default function EventDetails() {
   const handleWithdraw = () => {
     setIsSignedUp(false);
     setIsInWaitingList(false);
-  };
-
-  const handleCancelEvent = async () => {
-    setIsCancelling(true);
-    try {
-      // Simulate API call to cancel event
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Termin otkazan",
-        description: "Termin je uspješno otkazan i svi sudionici su obavješteni.",
-      });
-      
-      navigate('/');
-    } catch (error) {
-      toast({
-        title: "Greška",
-        description: "Dogodila se greška pri otkazivanju termina.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCancelling(false);
-    }
   };
 
   const getReliabilityColor = (reliability: number) => {
@@ -205,16 +181,9 @@ export default function EventDetails() {
                     <p className="text-sm text-muted-foreground">{mockEvent.address}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <Badge className="bg-primary/10 text-primary">
-                    {mockEvent.price} €
-                  </Badge>
-                  {mockEvent.price > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ~ {(mockEvent.price / mockEvent.maxPlayers).toFixed(2)} € po osobi
-                    </p>
-                  )}
-                </div>
+                <Badge className="bg-primary/10 text-primary">
+                  {mockEvent.price} kn
+                </Badge>
               </div>
               
               <div className="flex items-center justify-between">
@@ -453,29 +422,6 @@ export default function EventDetails() {
                   >
                     <Share2 className="h-4 w-4 mr-2" />
                     Podijeli termin
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Cancel Event Button for Organizers */}
-          {mockEvent.isUserOrganizer && (
-            <Card className="bg-gradient-card shadow-card border-0">
-              <CardContent className="p-4">
-                <div className="text-center space-y-3">
-                  <h3 className="font-medium text-foreground">Upravljanje terminom</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Kao organizator možeš otkazati ovaj termin
-                  </p>
-                  <Button 
-                    onClick={handleCancelEvent}
-                    disabled={isCancelling}
-                    variant="destructive"
-                    className="w-full"
-                    size="sm"
-                  >
-                    {isCancelling ? 'Otkazujem...' : 'Otkaži termin'}
                   </Button>
                 </div>
               </CardContent>

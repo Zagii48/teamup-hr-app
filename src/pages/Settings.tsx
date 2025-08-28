@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   Moon, 
   Sun, 
@@ -13,32 +12,12 @@ import {
   Trash2, 
   Bell,
   User,
-  Info,
-  LogOut
+  Info
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
-  const { signOut } = useAuth();
   const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Uspješno si se odjavio",
-        description: "Hvala što koristiš TeamUp!",
-      });
-      navigate('/');
-    } catch (error) {
-      toast({
-        title: "Greška",
-        description: "Dogodila se greška pri odjavi.",
-        variant: "destructive"
-      });
-    }
-  };
 
   return (
     <MobileLayout>
@@ -173,14 +152,6 @@ export default function Settings() {
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Obriši račun
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start text-muted-foreground"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Odjavi se
             </Button>
           </CardContent>
         </Card>

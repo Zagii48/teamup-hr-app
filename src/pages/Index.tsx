@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   Search, 
   Filter, 
@@ -18,9 +17,7 @@ import {
   Gamepad2,
   Target,
   Calendar,
-  User,
-  LogIn,
-  UserPlus
+  User
 } from 'lucide-react';
 
 // Mock data for user's signed up events
@@ -109,18 +106,10 @@ const filterOptions = [
 
 export default function Index() {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('signed-up');
   const [myEventsSubTab, setMyEventsSubTab] = useState<'active' | 'past'>('active');
-
-  // Redirect admins to admin panel
-  useEffect(() => {
-    if (user && isAdmin) {
-      navigate('/admin');
-    }
-  }, [user, isAdmin, navigate]);
 
   const getCurrentEvents = () => {
     if (activeTab === 'signed-up') {
@@ -181,40 +170,8 @@ export default function Index() {
           </p>
         </div>
 
-        {/* Show auth required message if user not logged in */}
-        {!user ? (
-          <Card className="bg-gradient-card shadow-card border-0">
-            <CardContent className="p-8 text-center">
-              <LogIn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">
-                Prijava potrebna
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Za pregled svojih termina moraš se prijaviti ili registrirati.
-              </p>
-              <div className="flex space-x-3">
-                <Button 
-                  onClick={() => navigate('/login')}
-                  className="flex-1 bg-gradient-primary text-white"
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Prijava
-                </Button>
-                <Button 
-                  onClick={() => navigate('/register')}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Registracija
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-muted">
             <TabsTrigger value="signed-up" className="data-[state=active]:bg-background">
               Prijavljeni termini
@@ -321,10 +278,7 @@ export default function Index() {
                           <MapPin className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <p className="text-sm font-medium text-foreground">{event.location}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {event.price > 0 ? `${event.price} €` : 'Besplatno'}
-                              {event.price > 0 && ` • ~ ${(event.price / event.maxPlayers).toFixed(2)} € po osobi`}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{event.price} kn</p>
                           </div>
                         </div>
                       </div>
@@ -378,24 +332,18 @@ export default function Index() {
             {/* Sub-tabs for My Events */}
             <div className="flex space-x-1 bg-muted p-1 rounded-lg">
               <Button
-                variant="ghost"
+                variant={myEventsSubTab === 'active' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setMyEventsSubTab('active')}
-                className={`flex-1 transition-all ${myEventsSubTab === 'active' 
-                  ? 'bg-background text-foreground shadow-sm border-b-2 border-primary' 
-                  : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`flex-1 ${myEventsSubTab === 'active' ? 'bg-background shadow-sm' : ''}`}
               >
                 Aktivni
               </Button>
               <Button
-                variant="ghost" 
+                variant={myEventsSubTab === 'past' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setMyEventsSubTab('past')}
-                className={`flex-1 transition-all ${myEventsSubTab === 'past'
-                  ? 'bg-background text-foreground shadow-sm border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`flex-1 ${myEventsSubTab === 'past' ? 'bg-background shadow-sm' : ''}`}
               >
                 Prošli
               </Button>
@@ -454,14 +402,18 @@ export default function Index() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1">
+                            <User className="h-3 w-3 text-primary" />
+                            <span className="text-xs text-primary">Organizator</span>
+                          </div>
                           {myEventsSubTab === 'active' && (
-                            <Badge className="bg-yellow-800/30 text-white rounded px-2 py-1 text-xs">
-                              🟡 Očekuje se evidencija
+                            <Badge className="bg-destructive/10 text-destructive text-xs">
+                              🔴 Očekuje se evidencija
                             </Badge>
                           )}
                           {myEventsSubTab === 'past' && (
-                            <Badge className="bg-green-800/30 text-white rounded px-2 py-1 text-xs">
-                              🟢 Evidencija spremljena
+                            <Badge className="bg-success/10 text-success text-xs">
+                              ✅ Evidencija spremljena
                             </Badge>
                           )}
                         </div>
@@ -507,8 +459,6 @@ export default function Index() {
             </div>
           </TabsContent>
         </Tabs>
-        </>
-        )}
       </div>
     </MobileLayout>
   );

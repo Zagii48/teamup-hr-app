@@ -1,37 +1,15 @@
-import { Home, Trophy, Plus, User, Settings, Shield } from 'lucide-react';
+import { Home, Trophy, Plus, User, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 
-const getNavigationItems = (isAuthenticated: boolean, isAdmin: boolean) => {
-  if (!isAuthenticated) {
-    return [
-      { path: '/', icon: Home, label: 'Pregled' },
-      { path: '/sports', icon: Trophy, label: 'Sportovi' },
-      { path: '/login', icon: User, label: 'Prijava' },
-    ];
-  }
-
-  if (isAdmin) {
-    return [
-      { path: '/', icon: Home, label: 'App' },
-      { path: '/admin', icon: Shield, label: 'Admin' },
-      { path: '/profile', icon: User, label: 'Profil' },
-      { path: '/settings', icon: Settings, label: 'Postavke' },
-    ];
-  }
-
-  return [
-    { path: '/', icon: Home, label: 'Pregled' },
-    { path: '/sports', icon: Trophy, label: 'Sportovi' },
-    { path: '/create', icon: Plus, label: 'Novi' },
-    { path: '/profile', icon: User, label: 'Profil' },
-    { path: '/settings', icon: Settings, label: 'Postavke' },
-  ];
-};
+const navigationItems = [
+  { path: '/', icon: Home, label: 'Pregled' },
+  { path: '/sports', icon: Trophy, label: 'Sportovi' },
+  { path: '/create', icon: Plus, label: 'Novi' },
+  { path: '/profile', icon: User, label: 'Profil' },
+  { path: '/settings', icon: Settings, label: 'Postavke' },
+];
 
 export function BottomNavigation() {
-  const { user, isAdmin } = useAuth();
-  const navigationItems = getNavigationItems(!!user, isAdmin);
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border">
       <div className="max-w-mobile mx-auto px-4">

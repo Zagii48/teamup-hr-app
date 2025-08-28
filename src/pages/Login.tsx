@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,73 +7,71 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   ArrowLeft, 
-  User,
+  Phone,
   Key,
-  Smartphone
+  Smartphone,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user, isAdmin } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        navigate(decodeURIComponent(returnUrl));
-      } else if (isAdmin) {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
-    }
-  }, [user, isAdmin, navigate, searchParams]);
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Call our authentication function
-      const { data, error } = await supabase.rpc('authenticate_user', {
-        username_input: username,
-        password_input: password
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phone,
       });
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        throw new Error('Neispravno korisničko ime ili lozinka');
-      }
-
-      // Create a mock session for our custom auth
-      const userData = data[0];
-      
+      setStep('otp');
       toast({
-        title: "Uspješna prijava!",
-        description: `Dobrodošao ${userData.full_name}!`,
+        title: "SMS kod poslan",
+        description: `Kod je poslan na broj ${phone}`,
       });
-
-      // Handle redirect after successful login
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        navigate(decodeURIComponent(returnUrl));
-      } else {
-        // Let the useEffect in AuthContext handle admin vs regular user routing
-        navigate('/');
-      }
     } catch (error: any) {
       toast({
         title: "Greška",
-        description: error.message || "Neispravno korisničko ime ili lozinka.",
+        description: error.message || "Dogodila se greška prilikom slanja koda.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phone,
+        token: otp,
+        type: 'sms'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Uspješna prijava!",
+        description: "Dobrodošao u TeamUp aplikaciju.",
+      });
+
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Greška",
+        description: error.message || "Neispravan kod. Pokušaj ponovo.",
         variant: "destructive"
       });
     } finally {
@@ -89,7 +87,7 @@ export default function Login() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => step === 'otp' ? setStep('phone') : navigate(-1)}
             className="text-foreground hover:bg-accent"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -108,58 +106,105 @@ export default function Login() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Prijava</h1>
             <p className="text-muted-foreground">
-              Unesi korisničko ime i lozinku
+              {step === 'phone' 
+                ? 'Unesi svoj broj telefona' 
+                : 'Unesi 6-znamenkasti kod'
+              }
             </p>
           </div>
         </div>
 
-        {/* Login Form */}
-        <Card className="bg-gradient-card shadow-card border-0">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              Podaci za prijavu
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Korisničko ime</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="mojnadimak"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="text-lg"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Lozinka</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="text-lg"
-                />
-              </div>
-              
-              <Button 
-                type="submit"
-                disabled={!username || !password || isLoading}
-                className="w-full bg-gradient-primary text-white font-medium"
-                size="lg"
-              >
-                {isLoading ? 'Prijavljivam...' : 'Prijavi se'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        {/* Phone Step */}
+        {step === 'phone' && (
+          <Card className="bg-gradient-card shadow-card border-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5 text-primary" />
+                Broj telefona
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Broj telefona</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+385 91 123 4567"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className="text-center text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Unesi broj u formatu +385...
+                  </p>
+                </div>
+                
+                <Button 
+                  type="submit"
+                  disabled={!phone || isLoading}
+                  className="w-full bg-gradient-primary text-white font-medium"
+                  size="lg"
+                >
+                  {isLoading ? 'Šalje se...' : 'Pošalji kod'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* OTP Step */}
+        {step === 'otp' && (
+          <Card className="bg-gradient-card shadow-card border-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-primary" />
+                SMS kod
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="otp">6-znamenkasti kod</Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    placeholder="123456"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    maxLength={6}
+                    required
+                    className="text-center text-2xl tracking-widest"
+                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Kod poslan na {phone}
+                  </p>
+                </div>
+                
+                <Button 
+                  type="submit"
+                  disabled={otp.length !== 6 || isLoading}
+                  className="w-full bg-gradient-primary text-white font-medium"
+                  size="lg"
+                >
+                  {isLoading ? 'Provjeravam...' : 'Potvrdi kod'}
+                </Button>
+
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  onClick={() => handleSendOtp({ preventDefault: () => {} } as React.FormEvent)}
+                  disabled={isLoading}
+                  className="w-full text-primary"
+                  size="sm"
+                >
+                  Pošalji kod ponovo
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Register Link */}
         <div className="text-center">

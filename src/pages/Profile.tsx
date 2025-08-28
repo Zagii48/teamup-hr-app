@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,101 +25,34 @@ import {
   CheckCircle, 
   XCircle,
   AlertTriangle,
-  Trash2,
-  LogIn,
-  UserPlus
+  Trash2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+
+// Mock user data
+const mockUser = {
+  id: '1',
+  name: 'Ana Anić',
+  phone: '+385 98 *** 12 34',
+  reliability: 88,
+  stats: {
+    totalSignups: 24,
+    attended: 21,
+    noShow: 3,
+    reliabilityPercentage: 88
+  },
+  recentEvents: [
+    { id: '1', title: 'Odbojka - Maksimir', date: '2024-01-10', attended: true, organizerId: 'org1', organizerName: 'Marko Marković' },
+    { id: '2', title: 'Nogomet - Bundek', date: '2024-01-08', attended: true, organizerId: 'org2', organizerName: 'Petra Petrić' },
+    { id: '3', title: 'Padel - Arena', date: '2024-01-05', attended: false, organizerId: 'org3', organizerName: 'Luka Lukić' },
+    { id: '4', title: 'Tenis - TK Zagreb', date: '2024-01-03', attended: true, organizerId: 'org4', organizerName: 'Nina Nikić' },
+    { id: '5', title: 'Odbojka - Športska', date: '2024-01-01', attended: true, organizerId: 'org5', organizerName: 'Ivo Ivić' },
+  ]
+};
 
 export default function Profile() {
-  const { user, loading: authLoading } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
-  const [userStats, setUserStats] = useState<any>(null);
-  const [recentEvents, setRecentEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (user) {
-        fetchUserData();
-      } else {
-        setLoading(false);
-      }
-    }
-  }, [user, authLoading]);
-
-  const fetchUserData = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-
-      // Fetch user data from users table
-      const { data: userInfo, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (userError) throw userError;
-      setUserData(userInfo);
-
-      // Fetch user participation stats
-      const { data: participations, error: statsError } = await supabase
-        .from('event_participants')
-        .select('attended')
-        .eq('user_id', user.id);
-
-      if (statsError) throw statsError;
-
-      const totalSignups = participations?.length || 0;
-      const attended = participations?.filter(p => p.attended === true).length || 0;
-      const noShow = participations?.filter(p => p.attended === false).length || 0;
-      const reliabilityPercentage = totalSignups > 0 ? Math.round((attended / totalSignups) * 100) : 100;
-
-      setUserStats({
-        totalSignups,
-        attended,
-        noShow,
-        reliabilityPercentage
-      });
-
-      // Fetch recent events
-      const { data: eventData, error: eventsError } = await supabase
-        .from('event_participants')
-        .select(`
-          attended,
-          events!inner(
-            id,
-            title,
-            location,
-            date_time,
-            creator_id,
-            profiles!inner(full_name)
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('events(date_time)', { ascending: false })
-        .limit(5);
-
-      if (eventsError) throw eventsError;
-
-      setRecentEvents(eventData || []);
-
-    } catch (error: any) {
-      toast({
-        title: "Greška",
-        description: error.message || "Greška pri dohvaćanju podataka.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getReliabilityBadge = (reliability: number) => {
     if (reliability >= 90) {
@@ -155,72 +88,7 @@ export default function Profile() {
     setIsDeleting(false);
   };
 
-  // Show loading state
-  if (authLoading || loading) {
-    return (
-      <MobileLayout>
-        <div className="p-4 text-center">
-          <p>Učitavam...</p>
-        </div>
-      </MobileLayout>
-    );
-  }
-
-  // Show login/register options if not authenticated
-  if (!user) {
-    return (
-      <MobileLayout>
-        <div className="p-4 space-y-6">
-          <div className="text-center pt-8">
-            <User className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Prijavite se
-            </h1>
-            <p className="text-muted-foreground mb-8">
-              Za pristup profilu potrebno je da se prijavite
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <Button 
-              onClick={() => navigate('/login')}
-              className="w-full bg-gradient-primary text-white"
-              size="lg"
-            >
-              <LogIn className="h-5 w-5 mr-2" />
-              Prijava
-            </Button>
-            
-            <Button 
-              onClick={() => navigate('/register')}
-              variant="outline"
-              className="w-full"
-              size="lg"
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Registracija
-            </Button>
-          </div>
-
-          <Card className="bg-gradient-card shadow-card border-0 mt-8">
-            <CardContent className="p-6 text-center">
-              <h3 className="font-semibold text-foreground mb-2">Zašto se registrirati?</h3>
-              <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Pridružite se sportskim terminama</li>
-                <li>• Kreirajte svoje termine</li>
-                <li>• Pratite svoju statistiku</li>
-                <li>• Povežite se s drugim sportašima</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </MobileLayout>
-    );
-  }
-
-  // Show actual user profile
-  const reliabilityPercentage = userStats?.reliabilityPercentage || 100;
-  const reliabilityBadge = getReliabilityBadge(reliabilityPercentage);
+  const reliabilityBadge = getReliabilityBadge(mockUser.reliability);
   const ReliabilityIcon = reliabilityBadge.icon;
 
   return (
@@ -239,14 +107,14 @@ export default function Profile() {
             <div className="flex items-center space-x-4 mb-4">
               <Avatar className="h-16 w-16">
                 <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                  {userData?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                  {mockUser.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <h2 className="text-xl font-semibold text-foreground">{userData?.full_name || 'Korisnik'}</h2>
+                <h2 className="text-xl font-semibold text-foreground">{mockUser.name}</h2>
                 <div className="flex items-center space-x-2 mt-1">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{userData?.phone || 'Nema telefona'}</span>
+                  <span className="text-muted-foreground">{mockUser.phone}</span>
                 </div>
               </div>
             </div>
@@ -254,10 +122,10 @@ export default function Profile() {
             <div className="flex items-center justify-between">
               <Badge className={reliabilityBadge.variant}>
                 <ReliabilityIcon className="h-4 w-4 mr-2" />
-                {reliabilityBadge.text}
+                {mockUser.reliability}% {reliabilityBadge.text}
               </Badge>
               <div className="text-right">
-                <p className="text-2xl font-bold text-primary">{reliabilityPercentage}%</p>
+                <p className="text-2xl font-bold text-primary">{mockUser.reliability}%</p>
                 <p className="text-xs text-muted-foreground">pouzdanost</p>
               </div>
             </div>
@@ -275,11 +143,11 @@ export default function Profile() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-primary">{userStats?.totalSignups || 0}</p>
+                <p className="text-2xl font-bold text-primary">{mockUser.stats.totalSignups}</p>
                 <p className="text-xs text-muted-foreground">Ukupno prijava</p>
               </div>
               <div className="text-center p-3 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-success">{userStats?.attended || 0}</p>
+                <p className="text-2xl font-bold text-success">{mockUser.stats.attended}</p>
                 <p className="text-xs text-muted-foreground">Dolazaka</p>
               </div>
             </div>
@@ -287,19 +155,19 @@ export default function Profile() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Pouzdanost</span>
-                <span className="text-sm font-medium text-foreground">{reliabilityPercentage}%</span>
+                <span className="text-sm font-medium text-foreground">{mockUser.stats.reliabilityPercentage}%</span>
               </div>
-              <Progress value={reliabilityPercentage} className="h-2" />
+              <Progress value={mockUser.stats.reliabilityPercentage} className="h-2" />
             </div>
             
             <div className="flex justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-success" />
-                <span className="text-muted-foreground">{userStats?.attended || 0} dolazaka</span>
+                <span className="text-muted-foreground">{mockUser.stats.attended} dolazaka</span>
               </div>
               <div className="flex items-center space-x-2">
                 <XCircle className="h-4 w-4 text-destructive" />
-                <span className="text-muted-foreground">{userStats?.noShow || 0} izostanaka</span>
+                <span className="text-muted-foreground">{mockUser.stats.noShow} izostanaka</span>
               </div>
             </div>
           </CardContent>
@@ -314,56 +182,40 @@ export default function Profile() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentEvents.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Još nema prijava na termine</p>
-              </div>
-            ) : (
-              recentEvents.map((participation: any) => {
-                const event = participation.events;
-                const organizerName = event.profiles?.full_name || 'Nepoznat organizator';
-                
-                return (
-                  <div 
-                    key={event.id} 
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
-                    onClick={() => navigate(`/events/${event.id}`)}
+            {mockUser.recentEvents.map((event) => (
+              <div 
+                key={event.id} 
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => navigate(`/events/${event.id}`)}
+              >
+                <div className="flex-1">
+                  <p className="font-medium text-foreground text-sm">{event.title}</p>
+                  <p className="text-xs text-muted-foreground">{event.date}</p>
+                  <p 
+                    className="text-xs text-primary hover:underline cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/profile/${event.organizerId}`);
+                    }}
                   >
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground text-sm">{event.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(event.date_time).toLocaleDateString('hr-HR')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {event.location}
-                      </p>
-                      <p className="text-xs text-primary">
-                        Organizator: {organizerName}
-                      </p>
-                    </div>
-                    <div className="flex items-center">
-                      {participation.attended === true ? (
-                        <Badge className="bg-success/10 text-success">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Došao
-                        </Badge>
-                      ) : participation.attended === false ? (
-                        <Badge className="bg-destructive/10 text-destructive">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Izostao
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-warning/10 text-warning">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Čeka se
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                    Organizator: {event.organizerName}
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  {event.attended ? (
+                    <Badge className="bg-success/10 text-success">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Došao
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-destructive/10 text-destructive">
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Izostao
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
