@@ -36,6 +36,7 @@ interface FormData {
   date: string;
   time: string;
   duration: string;
+  price: string;
   location: string;
   capacity: string;
   waitingList: string;
@@ -55,6 +56,7 @@ export default function CreateEvent() {
     date: '',
     time: '',
     duration: '60',
+    price: '0',
     location: '',
     capacity: '12',
     waitingList: '4',
@@ -235,6 +237,19 @@ export default function CreateEvent() {
                   />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price">Ukupna cijena termina (EUR)</Label>
+              <Input
+                id="price"
+                type="number"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
