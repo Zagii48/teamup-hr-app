@@ -7,101 +7,102 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   ArrowLeft, 
+  User,
   Phone,
   Key,
-  Smartphone,
-  User,
-  CheckCircle
+  Smartphone
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Register() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<'details' | 'phone' | 'otp'>('details');
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleContinue = () => {
-    if (name.trim().length < 2) {
-      toast({
-        title: "Greška",
-        description: "Ime mora imati najmanje 2 znakova.",
-        variant: "destructive"
-      });
-      return;
+  // Function to normalize Croatian phone numbers
+  const normalizePhoneNumber = (phoneInput: string): string => {
+    // Remove all non-digit characters
+    const cleaned = phoneInput.replace(/\D/g, '');
+    
+    // If it starts with 385, it's already in international format
+    if (cleaned.startsWith('385')) {
+      return `+${cleaned}`;
     }
-    setStep('phone');
+    
+    // If it starts with 0, remove it and add +385
+    if (cleaned.startsWith('0')) {
+      return `+385${cleaned.substring(1)}`;
+    }
+    
+    // If it starts with 9 (Croatian mobile), add +385
+    if (cleaned.startsWith('9') && cleaned.length === 8) {
+      return `+385${cleaned}`;
+    }
+    
+    // If no country code and looks like Croatian mobile, add +385
+    if (cleaned.length === 8 || cleaned.length === 9) {
+      return `+385${cleaned}`;
+    }
+    
+    // Otherwise, return as-is with + prefix if not present
+    return phoneInput.startsWith('+') ? phoneInput : `+${phoneInput}`;
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
-        options: {
-          data: {
-            full_name: name,
-          }
+      // Validate inputs
+      if (!fullName.trim() || !nickname.trim() || !password) {
+        throw new Error('Sva polja su obavezna');
+      }
+
+      if (password !== confirmPassword) {
+        throw new Error('Lozinke se ne poklapaju');
+      }
+
+      if (password.length < 6) {
+        throw new Error('Lozinka mora imati najmanje 6 znakova');
+      }
+
+      const normalizedPhone = normalizePhoneNumber(phone);
+
+      // Create user account
+      const { data: userId, error } = await supabase.rpc('create_user_account', {
+        full_name_input: fullName,
+        nickname_input: nickname,
+        phone_input: normalizedPhone,
+        password_input: password
+      });
+
+      if (error) {
+        if (error.message.includes('duplicate key')) {
+          throw new Error('Korisničko ime već postoji');
         }
-      });
+        throw error;
+      }
 
-      if (error) throw error;
-
-      setStep('otp');
       toast({
-        title: "SMS kod poslan",
-        description: `Kod je poslan na broj ${phone}`,
+        title: "Uspješna registracija!",
+        description: "Možete se prijaviti s vašim korisničkim imenom.",
       });
+
+      navigate('/login');
     } catch (error: any) {
       toast({
         title: "Greška",
-        description: error.message || "Dogodila se greška prilikom slanja koda.",
+        description: error.message || "Dogodila se greška prilikom registracije.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: phone,
-        token: otp,
-        type: 'sms'
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Dobrodošao u TeamUp!",
-        description: "Tvoj račun je uspješno kreiran.",
-      });
-
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: "Greška",
-        description: error.message || "Neispravan kod. Pokušaj ponovo.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    if (step === 'otp') setStep('phone');
-    else if (step === 'phone') setStep('details');
-    else navigate(-1);
   };
 
   return (
@@ -112,7 +113,7 @@ export default function Register() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleBack}
+            onClick={() => navigate(-1)}
             className="text-foreground hover:bg-accent"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -131,148 +132,100 @@ export default function Register() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Registracija</h1>
             <p className="text-muted-foreground">
-              {step === 'details' && 'Unesi svoje podatke'}
-              {step === 'phone' && 'Potvrdi broj telefona'}
-              {step === 'otp' && 'Unesi 6-znamenkasti kod'}
+              Stvori svoj TeamUp račun
             </p>
           </div>
         </div>
 
-        {/* Step indicators */}
-        <div className="flex items-center justify-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${step === 'details' ? 'bg-primary' : 'bg-muted'}`} />
-          <div className={`w-2 h-2 rounded-full ${step === 'phone' ? 'bg-primary' : 'bg-muted'}`} />
-          <div className={`w-2 h-2 rounded-full ${step === 'otp' ? 'bg-primary' : 'bg-muted'}`} />
-        </div>
-
-        {/* Details Step */}
-        {step === 'details' && (
-          <Card className="bg-gradient-card shadow-card border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Tvoji podaci
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Registration Form */}
+        <Card className="bg-gradient-card shadow-card border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Novi račun
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Ime i prezime</Label>
+                <Label htmlFor="fullName">Ime i prezime</Label>
                 <Input
-                  id="name"
+                  id="fullName"
                   type="text"
-                  placeholder="Marko Marković"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ana Anić"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   required
+                  className="text-lg"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Kako te drugi igrači trebaju zvati?
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nickname">Korisničko ime</Label>
+                <Input
+                  id="nickname"
+                  type="text"
+                  placeholder="mojnadimak"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  required
+                  className="text-lg"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Broj mobitela</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="091 123 4567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className="text-lg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Broj možeš unijeti s ili bez pozivnog broja (+385)
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Lozinka</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="text-lg"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Potvrdi lozinku</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="text-lg"
+                />
               </div>
               
               <Button 
-                onClick={handleContinue}
-                disabled={!name.trim()}
+                type="submit"
+                disabled={isLoading}
                 className="w-full bg-gradient-primary text-white font-medium"
                 size="lg"
               >
-                Nastavi
+                {isLoading ? 'Stvaram račun...' : 'Stvori račun'}
               </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Phone Step */}
-        {step === 'phone' && (
-          <Card className="bg-gradient-card shadow-card border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-primary" />
-                Broj telefona
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSendOtp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Broj telefona</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+385 91 123 4567"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                    className="text-center text-lg"
-                  />
-                  <p className="text-sm text-muted-foreground text-center">
-                    Unesi broj u formatu +385...
-                  </p>
-                </div>
-                
-                <Button 
-                  type="submit"
-                  disabled={!phone || isLoading}
-                  className="w-full bg-gradient-primary text-white font-medium"
-                  size="lg"
-                >
-                  {isLoading ? 'Šalje se...' : 'Pošalji kod'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* OTP Step */}
-        {step === 'otp' && (
-          <Card className="bg-gradient-card shadow-card border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="h-5 w-5 text-primary" />
-                SMS kod
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">6-znamenkasti kod</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="123456"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    maxLength={6}
-                    required
-                    className="text-center text-2xl tracking-widest"
-                  />
-                  <p className="text-sm text-muted-foreground text-center">
-                    Kod poslan na {phone}
-                  </p>
-                </div>
-                
-                <Button 
-                  type="submit"
-                  disabled={otp.length !== 6 || isLoading}
-                  className="w-full bg-gradient-primary text-white font-medium"
-                  size="lg"
-                >
-                  {isLoading ? 'Kreiram račun...' : 'Završi registraciju'}
-                </Button>
-
-                <Button 
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleSendOtp({ preventDefault: () => {} } as React.FormEvent)}
-                  disabled={isLoading}
-                  className="w-full text-primary"
-                  size="sm"
-                >
-                  Pošalji kod ponovo
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Login Link */}
         <div className="text-center">
