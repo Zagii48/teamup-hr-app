@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import Client from '@/api/client';
+import UserSession, {UserData} from "@/api/userData.ts";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,23 +28,22 @@ export default function Login() {
 
     try {
       // Call our authentication function
-      const { data, error } = await supabase.rpc('authenticate_user', {
-        username_input: username,
-        password_input: password
-      });
+      const response = await Client.login({ username, password });
 
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        throw new Error('Neispravno korisničko ime ili lozinka');
+      if (response.error) {
+        throw new Error(response.error);
       }
 
-      // Create a mock session for our custom auth
-      const userData = data[0];
-      
+      UserSession.setUser({
+        id: response.id,
+        username: response.username,
+        email: response.email,
+        token: response.token,
+      });
+
       toast({
         title: "Uspješna prijava!",
-        description: `Dobrodošao ${userData.full_name}!`,
+        description: `Dobrodošao ${response.username}!`,
       });
 
       navigate('/');

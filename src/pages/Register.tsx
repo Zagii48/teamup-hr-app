@@ -14,11 +14,13 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import Client from "@/api/client.ts";
+import UserSession from "@/api/userData.ts";
 
 export default function Register() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -59,7 +61,7 @@ export default function Register() {
 
     try {
       // Validate inputs
-      if (!fullName.trim() || !nickname.trim() || !password) {
+      if (!fullName.trim() || !username.trim() || !password) {
         throw new Error('Sva polja su obavezna');
       }
 
@@ -74,19 +76,24 @@ export default function Register() {
       const normalizedPhone = normalizePhoneNumber(phone);
 
       // Create user account
-      const { data: userId, error } = await supabase.rpc('create_user_account', {
-        full_name_input: fullName,
-        nickname_input: nickname,
-        phone_input: normalizedPhone,
-        password_input: password
+      const registerData: AuthenticationRegisterRequest = {
+        username: username.trim(),
+        password: password,
+        email: null
+      };
+      const response = await Client.register(registerData);
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      UserSession.setUser({
+        id: response.id,
+        username: response.username,
+        email: response.email,
+        token: response.token,
       });
 
-      if (error) {
-        if (error.message.includes('duplicate key')) {
-          throw new Error('Korisničko ime već postoji');
-        }
-        throw error;
-      }
 
       toast({
         title: "Uspješna registracija!",
@@ -166,8 +173,8 @@ export default function Register() {
                   id="nickname"
                   type="text"
                   placeholder="mojnadimak"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                   className="text-lg"
                 />
