@@ -1,27 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MobileLayout } from '@/components/MobileLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowLeft,
-  Zap, 
-  Dribbble, 
-  Target, 
-  Gamepad2,
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Timer,
-  Share2
-} from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import React, {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {MobileLayout} from '@/components/MobileLayout';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Textarea} from '@/components/ui/textarea';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {ArrowLeft, Dribbble, Gamepad2, Share2, Target, Zap} from 'lucide-react';
+import {toast} from '@/hooks/use-toast';
 
 const sportsOptions = [
   { id: 'odbojka', name: 'Odbojka', icon: Zap, color: 'bg-sport-volleyball' },

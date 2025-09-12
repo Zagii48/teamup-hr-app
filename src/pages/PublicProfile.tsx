@@ -32,7 +32,7 @@ const mockPublicUser = {
 };
 
 export default function PublicProfile() {
-  const { userId } = useParams();
+  const { username } = useParams();
   const navigate = useNavigate();
 
   const getReliabilityBadge = (reliability: number) => {

@@ -1,62 +1,52 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React, {createContext, useContext, useEffect, useState} from 'react';
+import {useLocalStorage} from "@/api/localStorage.ts";
 
 interface User {
-    id: string;
-    email: string | null;
-    phone: string | null;
+    id: number | null;
     username: string | null;
 }
 
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
+interface AuthenticationContext {
+    user: User | null;
+    token: string | null;
+    loading: boolean;
+    auth: (auth: Auth) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export interface Auth {
+    user: User | null;
+    token: string | null;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+const AuthContext = createContext<AuthenticationContext | undefined>(undefined);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setToken(session);
-        setUser(session?.user ?? null);
+export function AuthProvider({children}: { children: React.ReactNode }) {
+    const [user, setUser] = useLocalStorage<User | null>("teamup_user", null);
+    const [token, setToken] = useLocalStorage<string | null>("teamup_token", null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+
         setLoading(false);
-      }
+    }, []);
+
+    const auth = async (auth: Auth) => {
+        console.log("Authenticating user:", auth);
+        setUser(auth.user);
+        setToken(auth.token);
+    };
+
+    return (
+        <AuthContext.Provider value={{user, token, loading, auth}}>
+            {children}
+        </AuthContext.Provider>
     );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setToken(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, token, loading, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 }
